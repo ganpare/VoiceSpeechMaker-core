@@ -6,6 +6,7 @@ to avoid user dictionary access error
 from __future__ import annotations
 
 from typing import Any, Optional
+from typing_extensions import Literal
 
 from pyopenjtalk import NJDFeature, OpenJTalk
 
@@ -25,17 +26,20 @@ def run_frontend(
     text: str,
     run_marine: bool = False,
     use_vanilla: bool = False,
+    dialect: Literal["Kansai", "Kyusyu", "BabyTalk", "Hatsuonbin", "TTtoT", "StoZ", "DtoR"]
+    | None = None,
     jtalk: OpenJTalk | None = None,
 ) -> list[NJDFeature]:
     if WORKER_CLIENT is not None:
-        ret = WORKER_CLIENT.dispatch_pyopenjtalk("run_frontend", text)
+        ret = WORKER_CLIENT.dispatch_pyopenjtalk("run_frontend", text, dialect=dialect)
         assert isinstance(ret, list)
         return ret
     else:
         # without worker
         import pyopenjtalk
 
-        return pyopenjtalk.run_frontend(text, run_marine, use_vanilla, jtalk)
+        return pyopenjtalk.run_frontend(
+            text, run_marine=run_marine, use_vanilla=use_vanilla, dialect=dialect, jtalk=jtalk)
 
 
 def make_label(

@@ -25,7 +25,7 @@ psutil
 # punctuators
 pyannote.audio>=3.1.0
 # pyloudnorm
-pyopenjtalk-plus
+pyopenjtalk-mod
 pypinyin
 pyworld-prebuilt
 # stable_ts

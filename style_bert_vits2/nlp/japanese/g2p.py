@@ -1,6 +1,7 @@
 import re
 import sys
 from typing import TypedDict
+from typing_extensions import Literal
 
 from pyopenjtalk import NJDFeature, OpenJTalk
 
@@ -17,6 +18,8 @@ def g2p(
     norm_text: str,
     use_jp_extra: bool = True,
     raise_yomi_error: bool = False,
+    dialect: Literal["Kansai", "Kyusyu", "BabyTalk", "Hatsuonbin", "TTtoT", "StoZ", "DtoR"]
+    | None = None,
     jtalk: OpenJTalk | None = None,
 ) -> tuple[list[str], list[int], list[int], list[str], list[str], list[str]]:
     """
@@ -53,7 +56,7 @@ def g2p(
     # アクセント割当をしなおすことによって punctuation を含めた音素とアクセントのリストを作る。
 
     # OpenJTalk から NJDFeature のリストを取得
-    njd_features = pyopenjtalk.run_frontend(norm_text, jtalk=jtalk)
+    njd_features = pyopenjtalk.run_frontend(norm_text, dialect=dialect, jtalk=jtalk)
 
     # punctuation がすべて消えた、音素とアクセントのタプルのリスト（「ん」は「N」）
     phone_tone_list_wo_punct = __g2phone_tone_wo_punct(njd_features, jtalk=jtalk)
@@ -65,6 +68,7 @@ def g2p(
         norm_text,
         njd_features=njd_features,
         raise_yomi_error=raise_yomi_error,
+        dialect=dialect,
         jtalk=jtalk,
     )
 
@@ -120,6 +124,8 @@ def text_to_sep_kata(
     norm_text: str,
     njd_features: list[NJDFeature] | None = None,
     raise_yomi_error: bool = False,
+    dialect: Literal["Kansai", "Kyusyu", "BabyTalk", "Hatsuonbin", "TTtoT", "StoZ", "DtoR"]
+    | None = None,
     jtalk: OpenJTalk | None = None,
 ) -> tuple[list[str], list[str], list[str]]:
     """
@@ -142,7 +148,7 @@ def text_to_sep_kata(
 
     # njd_features: OpenJTalkの解析結果
     if njd_features is None:
-        njd_features = pyopenjtalk.run_frontend(norm_text, jtalk=jtalk)
+        njd_features = pyopenjtalk.run_frontend(norm_text, dialect=dialect, jtalk=jtalk)
     sep_text: list[str] = []
     sep_kata: list[str] = []
     sep_kata_with_joshi: list[str] = []  # 助詞を分けずに連結した sep_kata (例: "鉛筆", "を" -> "鉛筆を") # fmt: skip

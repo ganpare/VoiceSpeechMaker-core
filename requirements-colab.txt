@@ -18,7 +18,7 @@ onnxruntime-gpu
 onnxsim
 pyannote.audio>=3.1.0
 pyloudnorm
-pyopenjtalk-plus
+pyopenjtalk-mod
 pypinyin
 pyworld-prebuilt
 torch
