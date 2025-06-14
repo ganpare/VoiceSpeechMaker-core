@@ -168,6 +168,8 @@ def create_dataset_app() -> gr.Blocks:
                         "large",
                         "large-v2",
                         "large-v3",
+                        "kotoba-tech/kotoba-whisper-v1.0-faster",
+                        "kotoba-tech/kotoba-whisper-v2.0-faster",
                     ],
                     label="Whisperモデル",
                     value="large-v3",

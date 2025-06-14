@@ -1,9 +1,10 @@
+setuptools<80.9
 accelerate
 aivmlib
 cmudict
 cn2an
 e2k
-faster-whisper==0.10.1
+faster-whisper
 g2p_en
 GPUtil
 gradio>=4.32
@@ -32,5 +33,5 @@ stable_ts
 tensorboard
 torch
 torchaudio
-transformers
+transformers==1.48 #4.45.2
 umap-learn

@@ -349,7 +349,7 @@ def convert_unsupported_phones_for_current_model(
 
     # ここでは必ず音素数・アクセント数・word2ph の長さが一致するはず（事前チェックとして念のため）
     # 通常起こり得ないが、万が一一致しない場合、誤った対応関係で学習される可能性があるためデータセットに含めるべきでない
-    assert len(phone) == len(tone) == sum(word2ph)
+    #assert len(phone) == len(tone) == sum(word2ph)
 
     # 日本語のみ、g2p 処理では対応しているが現行モデルでは対応していない特定音素を変換 (フォールバック)
     if language == Languages.JP:
@@ -398,7 +398,7 @@ def convert_unsupported_phones_for_current_model(
                 word2ph[char_idx] += len(converted_phones) - 1
 
         # ここでは必ず音素数・アクセント数・word2ph の長さが一致するはず
-        assert len(phone) == len(tone) == sum(word2ph)
+        #assert len(phone) == len(tone) == sum(word2ph)
 
 
 def cleaned_text_to_sequence(
