@@ -5,6 +5,7 @@ cmudict
 cn2an
 e2k
 faster-whisper
+ctranslate2==3.24.0
 g2p_en
 GPUtil
 gradio>=4.32
@@ -33,5 +34,5 @@ stable_ts
 tensorboard
 torch
 torchaudio
-transformers==1.48 #4.45.2
+transformers==4.48
 umap-learn

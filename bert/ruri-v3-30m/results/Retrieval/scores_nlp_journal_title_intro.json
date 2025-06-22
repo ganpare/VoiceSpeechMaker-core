@@ -1,0 +1,43 @@
+{
+    "metric_name": "ndcg@10",
+    "metric_value": 0.952800178633583,
+    "details": {
+        "optimal_distance_metric": "cosine_similarity",
+        "val_scores": {
+            "cosine_similarity": {
+                "accuracy@1": 0.9098360655737705,
+                "accuracy@3": 1.0,
+                "accuracy@5": 1.0,
+                "accuracy@10": 1.0,
+                "ndcg@10": 0.9613572009953175,
+                "mrr@10": 0.948087431693989
+            },
+            "dot_score": {
+                "accuracy@1": 0.5163934426229508,
+                "accuracy@3": 0.6967213114754098,
+                "accuracy@5": 0.7704918032786885,
+                "accuracy@10": 0.9098360655737705,
+                "ndcg@10": 0.6978721375696932,
+                "mrr@10": 0.6319119177725737
+            },
+            "euclidean_distance": {
+                "accuracy@1": 0.9098360655737705,
+                "accuracy@3": 0.9918032786885246,
+                "accuracy@5": 1.0,
+                "accuracy@10": 1.0,
+                "ndcg@10": 0.9597157813600874,
+                "mrr@10": 0.9460382513661202
+            }
+        },
+        "test_scores": {
+            "cosine_similarity": {
+                "accuracy@1": 0.9044715447154471,
+                "accuracy@3": 0.9796747967479674,
+                "accuracy@5": 0.9857723577235772,
+                "accuracy@10": 0.9898373983739838,
+                "ndcg@10": 0.952800178633583,
+                "mrr@10": 0.9402100271002707
+            }
+        }
+    }
+}

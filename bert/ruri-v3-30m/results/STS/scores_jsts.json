@@ -1,0 +1,31 @@
+{
+    "metric_name": "spearman",
+    "metric_value": 0.8356175706895222,
+    "details": {
+        "optimal_similarity_metric": "manhatten_distance",
+        "val_scores": {
+            "cosine_similarity": {
+                "pearson": 0.8404281855844857,
+                "spearman": 0.8017438271713762
+            },
+            "manhatten_distance": {
+                "pearson": 0.8512649681178952,
+                "spearman": 0.8090668812291545
+            },
+            "euclidean_distance": {
+                "pearson": 0.8512649681178952,
+                "spearman": 0.8090668812291545
+            },
+            "dot_score": {
+                "pearson": 0.5447776347947747,
+                "spearman": 0.48206214434826716
+            }
+        },
+        "test_scores": {
+            "manhatten_distance": {
+                "pearson": 0.8716978041780308,
+                "spearman": 0.8356175706895222
+            }
+        }
+    }
+}

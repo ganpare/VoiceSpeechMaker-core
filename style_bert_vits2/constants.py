@@ -20,14 +20,16 @@ class Languages(StrEnum):
 
 # 言語ごとのデフォルトの BERT モデルのパス
 DEFAULT_BERT_MODEL_PATHS = {
-    Languages.JP: BASE_DIR / "bert" / "deberta-v2-large-japanese-char-wwm",
+    Languages.JP: BASE_DIR / "bert" / "ruri-v3-30m",
+    #Languages.JP: BASE_DIR / "bert" / "deberta-v2-large-japanese-char-wwm",
     Languages.EN: BASE_DIR / "bert" / "deberta-v3-large",
     Languages.ZH: BASE_DIR / "bert" / "chinese-roberta-wwm-ext-large",
 }
 
 # 言語ごとのデフォルトの BERT モデル (ONNX 版) のパス
 DEFAULT_ONNX_BERT_MODEL_PATHS = {
-    Languages.JP: BASE_DIR / "bert" / "deberta-v2-large-japanese-char-wwm-onnx",
+    Languages.JP: BASE_DIR / "bert" / "ruri-v3-30m-onnx",
+    #Languages.JP: BASE_DIR / "bert" / "deberta-v2-large-japanese-char-wwm-onnx",
     Languages.EN: BASE_DIR / "bert" / "deberta-v3-large-onnx",
     Languages.ZH: BASE_DIR / "bert" / "chinese-roberta-wwm-ext-large-onnx",
 }

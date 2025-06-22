@@ -1,0 +1,36 @@
+{
+    "metric_name": "v_measure_score",
+    "metric_value": 0.4881370307332537,
+    "details": {
+        "optimal_clustering_model_name": "AgglomerativeClustering",
+        "val_scores": {
+            "MiniBatchKMeans": {
+                "v_measure_score": 0.4562382218342515,
+                "homogeneity_score": 0.49249152825705034,
+                "completeness_score": 0.4249563199165431
+            },
+            "AgglomerativeClustering": {
+                "v_measure_score": 0.5433828438484897,
+                "homogeneity_score": 0.5919177132958688,
+                "completeness_score": 0.5022041272709584
+            },
+            "BisectingKMeans": {
+                "v_measure_score": 0.4389952149156496,
+                "homogeneity_score": 0.4808142640933827,
+                "completeness_score": 0.4038685553339179
+            },
+            "Birch": {
+                "v_measure_score": 0.5125510619396018,
+                "homogeneity_score": 0.556815661948795,
+                "completeness_score": 0.4748059067965279
+            }
+        },
+        "test_scores": {
+            "AgglomerativeClustering": {
+                "v_measure_score": 0.4881370307332537,
+                "homogeneity_score": 0.523286816138385,
+                "completeness_score": 0.45741212511075774
+            }
+        }
+    }
+}

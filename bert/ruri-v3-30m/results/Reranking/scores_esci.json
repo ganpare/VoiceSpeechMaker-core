@@ -1,0 +1,31 @@
+{
+    "metric_name": "ndcg@10",
+    "metric_value": 0.9299661307059909,
+    "details": {
+        "optimal_distance_metric": "cosine_similarity",
+        "val_scores": {
+            "cosine_similarity": {
+                "ndcg@10": 0.9440993600432698,
+                "ndcg@20": 0.95627426512661,
+                "ndcg@40": 0.9641884500999921
+            },
+            "dot_score": {
+                "ndcg@10": 0.9271146332707303,
+                "ndcg@20": 0.9425769159131382,
+                "ndcg@40": 0.9520380624838315
+            },
+            "euclidean_distance": {
+                "ndcg@10": 0.9438976185426051,
+                "ndcg@20": 0.9564892557693009,
+                "ndcg@40": 0.964202701464001
+            }
+        },
+        "test_scores": {
+            "cosine_similarity": {
+                "ndcg@10": 0.9299661307059909,
+                "ndcg@20": 0.9468040115183574,
+                "ndcg@40": 0.9563293417176041
+            }
+        }
+    }
+}

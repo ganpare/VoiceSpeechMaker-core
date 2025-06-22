@@ -1,0 +1,41 @@
+{
+    "metric_name": "binary_f1",
+    "metric_value": 0.6239830208701804,
+    "details": {
+        "optimal_distance_metric": "euclidean_distances",
+        "val_scores": {
+            "cosine_distances": {
+                "accuracy": 0.5725,
+                "accuracy_threshold": 0.7321051359176636,
+                "binary_f1": 0.5979670522257273,
+                "binary_f1_threshold": 1.0
+            },
+            "manhatten_distances": {
+                "accuracy": 0.6045,
+                "accuracy_threshold": 67.94537353515625,
+                "binary_f1": 0.6022566995768688,
+                "binary_f1_threshold": 421.75653076171875
+            },
+            "euclidean_distances": {
+                "accuracy": 0.603,
+                "accuracy_threshold": 5.449267387390137,
+                "binary_f1": 0.6024691358024691,
+                "binary_f1_threshold": 34.279319763183594
+            },
+            "dot_similarities": {
+                "accuracy": 0.578,
+                "accuracy_threshold": 2934.005126953125,
+                "binary_f1": 0.5991531404375441,
+                "binary_f1_threshold": 2111.74609375
+            }
+        },
+        "test_scores": {
+            "euclidean_distances": {
+                "accuracy": 0.563,
+                "accuracy_threshold": 5.449267387390137,
+                "binary_f1": 0.6239830208701804,
+                "binary_f1_threshold": 34.279319763183594
+            }
+        }
+    }
+}

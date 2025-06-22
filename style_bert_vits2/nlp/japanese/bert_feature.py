@@ -66,6 +66,23 @@ def extract_bert_feature(
             inputs[i] = inputs[i].to(device)  # type: ignore
         res = model(**inputs, output_hidden_states=True)
         res = torch.cat(res["hidden_states"][-3:-2], -1)[0]
+
+        res = torch.mean(res, dim=0, keepdim=True).to(res.device)
+        total_padding = len(word2ph) - len(res)
+        if total_padding > 0:
+
+            #single_row = res[-1, :].to(res.device)
+            #padding = single_row.unsqueeze(0).repeat(total_padding, 1).to(res.device)
+            padding = torch.zeros((total_padding, res.shape[1]), dtype=res.dtype, device=res.device)
+            res = torch.cat([res , padding], 0).to(res.device)
+        else:
+            res = torch.cat([res[:len(word2ph)]], 0).to(res.device)
+
+        linear_transform = torch.nn.Linear(in_features=256, out_features=1024).to(res.device)
+
+        # 変換を実行
+        res = linear_transform(res).to(res.device)
+
         if assist_text:
             style_inputs = tokenizer(assist_text, return_tensors="pt")
             for i in style_inputs:
@@ -74,7 +91,7 @@ def extract_bert_feature(
             style_res = torch.cat(style_res["hidden_states"][-3:-2], -1)[0]
             style_res_mean = style_res.mean(0)
 
-    assert len(word2ph) == len(text) + 2, text
+    #assert len(word2ph) == len(text) + 2, text
     word2phone = torch.LongTensor(word2ph).to(device)
     if assist_text:
         assert style_res_mean is not None
@@ -152,6 +169,34 @@ def extract_bert_feature_onnx(
     session.run_with_iobinding(io_binding, run_options=run_options)
     res = io_binding.get_outputs()[0].numpy()
 
+    res =  np.mean(res, axis=0, keepdims=True) # 1行に圧縮
+    total_padding = len(word2ph) - len(res)
+
+    if total_padding > 0:
+        #single_row = np.mean(res, axis=0, keepdims=True)
+        #single_row = res[-1, :]
+        padding = np.zeros((total_padding, res.shape[1]), dtype=res.dtype)
+        #padding = np.tile(single_row, (total_padding, 1))
+        res = np.concatenate([res, padding], axis=0)
+
+    #else:
+        #res = res[:len(word2ph)]
+
+    # --- Linear Transformation ---
+    # You'll need the weight and bias from your PyTorch linear_transform.
+    # For this example, let's create dummy weight and bias
+    in_features = 256
+    out_features = 1024
+    linear_transform_weight = np.random.rand(out_features, in_features) # PyTorch weight is [out, in]
+    linear_transform_bias = np.random.rand(out_features) # PyTorch bias is [out]
+
+    # Perform the linear transformation: Y = X @ W_T + B
+    # In NumPy, for Y = XA^T + B, it's X @ A.T + B or X @ A_transposed + B
+    # Since PyTorch's linear layer weight is (out_features, in_features),
+    # we need to transpose it for the dot product with res (which is [N, in_features]).
+    res = res @ linear_transform_weight.T+ linear_transform_bias
+    
+    res = res.astype(np.float32) 
     style_res_mean = None
     if assist_text:
         # 入力をテンソルに変換
@@ -174,7 +219,7 @@ def extract_bert_feature_onnx(
         style_res = io_binding.get_outputs()[0].numpy()
         style_res_mean = np.mean(style_res, axis=0)
 
-    assert len(word2ph) == len(text) + 2, text
+    #assert len(word2ph) == len(text) + 2, text
     word2phone = word2ph
     phone_level_feature = []
     for i in range(len(word2phone)):

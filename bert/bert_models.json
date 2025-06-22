@@ -1,11 +1,11 @@
 {
-    "deberta-v2-large-japanese-char-wwm": {
-        "repo_id": "ku-nlp/deberta-v2-large-japanese-char-wwm",
-        "files": ["pytorch_model.bin"]
+    "ruri-v3-30m": {
+        "repo_id": "cl-nagoya/ruri-v3-30m",
+        "files": ["model.safetensors", "tokenizer.model"]
     },
-    "deberta-v2-large-japanese-char-wwm-onnx": {
-        "repo_id": "tsukumijima/deberta-v2-large-japanese-char-wwm-onnx",
-        "files": ["model_fp16.onnx"]
+    "ruri-v3-30m-onnx": {
+        "repo_id": "WariHima/ruri-v3-30m-onnx",
+        "files": ["model_fp16.onnx", "tokenizer.model"]
     },
     "chinese-roberta-wwm-ext-large": {
         "repo_id": "hfl/chinese-roberta-wwm-ext-large",

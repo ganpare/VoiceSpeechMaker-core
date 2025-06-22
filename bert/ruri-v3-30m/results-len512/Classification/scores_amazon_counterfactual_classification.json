@@ -1,0 +1,23 @@
+{
+    "metric_name": "macro_f1",
+    "metric_value": 0.7566757848117754,
+    "details": {
+        "optimal_classifier_name": "logreg",
+        "val_scores": {
+            "knn_cosine_k_2": {
+                "accuracy": 0.9184549356223176,
+                "macro_f1": 0.6615443425076453
+            },
+            "logreg": {
+                "accuracy": 0.9291845493562232,
+                "macro_f1": 0.7817701903018435
+            }
+        },
+        "test_scores": {
+            "logreg": {
+                "accuracy": 0.9229122055674518,
+                "macro_f1": 0.7566757848117754
+            }
+        }
+    }
+}
