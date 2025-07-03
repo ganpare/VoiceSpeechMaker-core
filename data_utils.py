@@ -182,6 +182,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         except Exception as e:
             logger.warning("Bert load Failed")
             logger.warning(e)
+            bert_ori = torch.zeros(1024, len(phone))
 
         if language_str == "ZH":
             bert = bert_ori

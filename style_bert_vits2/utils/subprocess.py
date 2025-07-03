@@ -27,7 +27,7 @@ def run_script_with_log(
         stdout=SAFE_STDOUT,
         stderr=subprocess.PIPE,
         text=True,
-        encoding="utf-8",
+        encoding="cp932",
         check=False,
     )
     if result.returncode != 0:

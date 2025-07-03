@@ -9,7 +9,6 @@ import torch.distributed as dist
 from huggingface_hub import HfApi
 from torch.cuda.amp import GradScaler, autocast
 from torch.nn import functional as F
-from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -127,17 +126,17 @@ def run():
         )
     )
 
-    backend = "nccl"
-    if platform.system() == "Windows":
-        backend = "gloo"  # If Windows,switch to gloo backend.
-    dist.init_process_group(
-        backend=backend,
-        init_method="env://",
-        timeout=datetime.timedelta(seconds=300),
-    )  # Use torchrun instead of mp.spawn
-    rank = dist.get_rank()
-    local_rank = int(os.environ["LOCAL_RANK"])
-    n_gpus = dist.get_world_size()
+    # backend = "nccl"
+    # if platform.system() == "Windows":
+    #     backend = "gloo"  # If Windows,switch to gloo backend.
+    # dist.init_process_group(
+    #     backend=backend,
+    #     init_method="env://",
+    #     timeout=datetime.timedelta(seconds=300),
+    # )  # Use torchrun instead of mp.spawn
+    rank = 0  # 単一GPU用に固定
+    local_rank = 0  # 単一GPU用に固定
+    n_gpus = 1  # 単一GPU用に固定
 
     hps = HyperParameters.load_from_json(args.config)
     # This is needed because we have to pass values to `train_and_evaluate()
@@ -199,7 +198,7 @@ def run():
     os.makedirs(config.out_dir, exist_ok=True)
 
     if not args.skip_default_style:
-        default_style.save_styles_by_dirs(
+        default_style.save_neutral_vector(
             os.path.join(args.model, "wavs"),
             config.out_dir,
             config_path=args.config,
@@ -392,28 +391,12 @@ def run():
         )
     else:
         optim_wd = None
-    net_g = DDP(
-        net_g,
-        device_ids=[local_rank],
-        # bucket_cap_mb=512
-    )
-    net_d = DDP(
-        net_d,
-        device_ids=[local_rank],
-        # bucket_cap_mb=512
-    )
+    net_g = net_g.cuda(local_rank)
+    net_d = net_d.cuda(local_rank)
     if net_dur_disc is not None:
-        net_dur_disc = DDP(
-            net_dur_disc,
-            device_ids=[local_rank],
-            # bucket_cap_mb=512,
-        )
+        net_dur_disc = net_dur_disc.cuda(local_rank)
     if net_wd is not None:
-        net_wd = DDP(
-            net_wd,
-            device_ids=[local_rank],
-            #  bucket_cap_mb=512
-        )
+        net_wd = net_wd.cuda(local_rank)
 
     if utils.is_resuming(model_dir):
         if net_dur_disc is not None:
@@ -718,12 +701,12 @@ def train_and_evaluate(
         bert,
         style_vec,
     ) in enumerate(train_loader):
-        if net_g.module.use_noise_scaled_mas:
+        if net_g.use_noise_scaled_mas:
             current_mas_noise_scale = (
-                net_g.module.mas_noise_scale_initial
-                - net_g.module.noise_scale_delta * global_step
+                net_g.mas_noise_scale_initial
+                - net_g.noise_scale_delta * global_step
             )
-            net_g.module.current_mas_noise_scale = max(current_mas_noise_scale, 0.0)
+            net_g.current_mas_noise_scale = max(current_mas_noise_scale, 0.0)
         x, x_lengths = (
             x.cuda(local_rank, non_blocking=True),
             x_lengths.cuda(local_rank, non_blocking=True),
@@ -1077,7 +1060,7 @@ def evaluate(hps, generator, eval_loader, writer_eval):
             language = language.cuda()
             style_vec = style_vec.cuda()
             for use_sdp in [True, False]:
-                y_hat, attn, mask, *_ = generator.module.infer(
+                y_hat, attn, mask, *_ = generator.infer(
                     x,
                     x_lengths,
                     speakers,

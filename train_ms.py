@@ -126,17 +126,29 @@ def run():
         )
     )
 
-    backend = "nccl"
+    n_gpus = int(os.environ.get("WORLD_SIZE", 1))
+    rank = int(os.environ.get("RANK", 0))
+    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+
     if platform.system() == "Windows":
-        backend = "gloo"  # If Windows,switch to gloo backend.
-    dist.init_process_group(
-        backend=backend,
-        init_method="env://",
-        timeout=datetime.timedelta(seconds=300),
-    )  # Use torchrun instead of mp.spawn
-    rank = dist.get_rank()
-    local_rank = int(os.environ["LOCAL_RANK"])
-    n_gpus = dist.get_world_size()
+        backend = "gloo"
+        import tempfile
+        store_path = os.path.join(tempfile.gettempdir(), "torch_distributed_file_store")
+        store = dist.FileStore(store_path, n_gpus)
+        dist.init_process_group(
+            backend=backend,
+            store=store,
+            rank=rank,
+            world_size=n_gpus,
+            timeout=datetime.timedelta(seconds=300),
+        )
+    else:
+        backend = "nccl"
+        dist.init_process_group(
+            backend=backend,
+            init_method="env://",
+            timeout=datetime.timedelta(seconds=300),
+        )
 
     hps = HyperParameters.load_from_json(args.config)
     # This is needed because we have to pass values to `train_and_evaluate()`
@@ -198,7 +210,7 @@ def run():
     os.makedirs(config.out_dir, exist_ok=True)
 
     if not args.skip_default_style:
-        default_style.save_styles_by_dirs(
+        default_style.save_neutral_vector(
             os.path.join(args.model, "wavs"),
             config.out_dir,
             config_path=args.config,

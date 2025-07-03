@@ -4,8 +4,8 @@ aivmlib
 cmudict
 cn2an
 e2k
-faster-whisper
-ctranslate2==3.24.0
+faster-whisper>=1.0.0
+ctranslate2>=4.0
 g2p_en
 GPUtil
 gradio>=4.32
