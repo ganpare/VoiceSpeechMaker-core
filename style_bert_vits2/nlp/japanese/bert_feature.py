@@ -61,7 +61,10 @@ def extract_bert_feature(
     style_res_mean = None
     with torch.no_grad():
         tokenizer = bert_models.load_tokenizer(Languages.JP)
-        inputs = tokenizer(text, return_tensors="pt")
+        if assist_text:
+            inputs = tokenizer(assist_text, return_tensors="pt")
+        else:
+            inputs = tokenizer(text, return_tensors="pt")
         for i in inputs:
             inputs[i] = inputs[i].to(device)  # type: ignore
         res = model(**inputs, output_hidden_states=True)
@@ -69,27 +72,15 @@ def extract_bert_feature(
 
         res = torch.mean(res, dim=0, keepdim=True).to(res.device)
         total_padding = len(word2ph) - len(res)
-        if total_padding > 0:
 
-            #single_row = res[-1, :].to(res.device)
-            #padding = single_row.unsqueeze(0).repeat(total_padding, 1).to(res.device)
-            padding = torch.zeros((total_padding, res.shape[1]), dtype=res.dtype, device=res.device)
-            res = torch.cat([res , padding], 0).to(res.device)
-        else:
-            res = torch.cat([res[:len(word2ph)]], 0).to(res.device)
+
+        padding = torch.zeros((total_padding, res.shape[1]), dtype=res.dtype, device=res.device)
+        res = torch.cat([res , padding], 0).to(res.device)
 
         linear_transform = torch.nn.Linear(in_features=256, out_features=1024).to(res.device)
 
         # 変換を実行
         res = linear_transform(res).to(res.device)
-
-        if assist_text:
-            style_inputs = tokenizer(assist_text, return_tensors="pt")
-            for i in style_inputs:
-                style_inputs[i] = style_inputs[i].to(device)  # type: ignore
-            style_res = model(**style_inputs, output_hidden_states=True)
-            style_res = torch.cat(style_res["hidden_states"][-3:-2], -1)[0]
-            style_res_mean = style_res.mean(0)
 
     #assert len(word2ph) == len(text) + 2, text
     word2phone = torch.LongTensor(word2ph).to(device)
@@ -151,7 +142,10 @@ def extract_bert_feature_onnx(
     device_type, device_id, run_options = get_onnx_device_options(session, onnx_providers)  # fmt: skip
 
     # 入力をテンソルに変換
-    inputs = tokenizer(text, return_tensors="np")
+    if assist_text:
+        inputs = tokenizer(assist_text, return_tensors="np")
+    else:
+        inputs = tokenizer(text, return_tensors="np")
     input_tensor = [
         inputs["input_ids"].astype(np.int64),  # type: ignore
         inputs["attention_mask"].astype(np.int64),  # type: ignore
@@ -170,17 +164,7 @@ def extract_bert_feature_onnx(
     res = io_binding.get_outputs()[0].numpy()
 
     res =  np.mean(res, axis=0, keepdims=True) # 1行に圧縮
-    total_padding = len(word2ph) - len(res)
 
-    if total_padding > 0:
-        #single_row = np.mean(res, axis=0, keepdims=True)
-        #single_row = res[-1, :]
-        padding = np.zeros((total_padding, res.shape[1]), dtype=res.dtype)
-        #padding = np.tile(single_row, (total_padding, 1))
-        res = np.concatenate([res, padding], axis=0)
-
-    #else:
-        #res = res[:len(word2ph)]
 
     # --- Linear Transformation ---
     # You'll need the weight and bias from your PyTorch linear_transform.
@@ -197,40 +181,16 @@ def extract_bert_feature_onnx(
     res = res @ linear_transform_weight.T+ linear_transform_bias
     
     res = res.astype(np.float32) 
-    style_res_mean = None
-    if assist_text:
-        # 入力をテンソルに変換
-        style_inputs = tokenizer(assist_text, return_tensors="np")
-        style_input_tensor = [
-            style_inputs["input_ids"].astype(np.int64),  # type: ignore
-            style_inputs["attention_mask"].astype(np.int64),  # type: ignore
-        ]
-        # 推論デバイスに入力テンソルを割り当て
-        ## GPU 推論の場合、device_type + device_id に対応する GPU デバイスに入力テンソルが割り当てられる
-        io_binding = session.io_binding()  # IOBinding は作り直す必要がある
-        for name, value in zip(input_names, style_input_tensor):
-            gpu_tensor = onnxruntime.OrtValue.ortvalue_from_numpy(
-                value, device_type, device_id
-            )
-            io_binding.bind_ortvalue_input(name, gpu_tensor)
-        # assist_text から BERT 特徴量を抽出
-        io_binding.bind_output(output_name, device_type)
-        session.run_with_iobinding(io_binding, run_options=run_options)
-        style_res = io_binding.get_outputs()[0].numpy()
-        style_res_mean = np.mean(style_res, axis=0)
+
+    total_padding = len(word2ph) - len(res)
+    padding = np.zeros((total_padding, res.shape[1]), dtype=res.dtype)
+    res = np.concatenate([res, padding], axis=0)
 
     #assert len(word2ph) == len(text) + 2, text
     word2phone = word2ph
     phone_level_feature = []
     for i in range(len(word2phone)):
-        if assist_text:
-            assert style_res_mean is not None
-            repeat_feature = (
-                np.tile(res[i], (word2phone[i], 1)) * (1 - assist_text_weight)
-                + np.tile(style_res_mean, (word2phone[i], 1)) * assist_text_weight
-            )
-        else:
-            repeat_feature = np.tile(res[i], (word2phone[i], 1))
+        repeat_feature = np.tile(res[i], (word2phone[i], 1))
         phone_level_feature.append(repeat_feature)
 
     phone_level_feature = np.concatenate(phone_level_feature, axis=0)

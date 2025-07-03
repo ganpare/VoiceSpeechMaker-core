@@ -18,7 +18,7 @@ class DisableCompileContextManager:
         torch.compile = self._original_compile
 
 def export():
-    onnx_temp_model_path= "./bert/ruri-v3-30m-onnx/model_fp16.onnx"
+    onnx_temp_model_path= "./bert/ruri-v3-30m-onnx/model.onnx"
     #'./model.onnx'
     onnx_fp16_model_path = "./bert/ruri-v3-30m-onnx/model_fp16.onnx"
 
@@ -28,9 +28,6 @@ def export():
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 "./bert/ruri-v3-30m",
                 num_labels=3,
-                # Flash Attention 2.0's recalculated memory access pattern and partitioning strategy causes
-                # onnx to report an error by not being able to compute the export map
-                attn_implementation="eager"  # Use standard attention
                 # reference_compile=False, # disable triton compile
                 )
 
@@ -72,16 +69,16 @@ def export():
                     },
                     )
 
-    #onnx_model = onnx.load(onnx_temp_model_path)
-    #simplified_onnx_model, check = simplify(onnx_model)
-    """
+    onnx_model = onnx.load(onnx_temp_model_path)
+    simplified_onnx_model, check = simplify(onnx_model)
+ 
     fp16_model = float16_converter.convert_float_to_float16(
             simplified_onnx_model,
             keep_io_types=True,  # 入出力は float32 のまま
             disable_shape_infer=True,
         )
-    """
+
     
-    #onnx.save(fp16_model, onnx_fp16_model_path)
+    onnx.save(fp16_model, onnx_fp16_model_path)
 if __name__ == '__main__':
     export()

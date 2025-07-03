@@ -1,7 +1,7 @@
 import torch
 
 model_root = "Data/jvnv/models"
-step = "0"
+step = "20000"
 
 g_model = torch.load(f"{model_root}/G_{step}.pth", map_location="cpu")
 d_model = torch.load(f"{model_root}/D_{step}.pth", map_location="cpu")
