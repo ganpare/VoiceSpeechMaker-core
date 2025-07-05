@@ -30,6 +30,7 @@ dependencies = [
     "jieba",
     "librosa>=0.11.0",
     "loguru",
+    "modal>=1.0.5",
     "nltk<=3.8.1",
     "num2words",
     "numba",

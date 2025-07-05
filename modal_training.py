@@ -55,15 +55,17 @@ app = modal.App("style-bert-vits2-training", image=image)
 data_volume = modal.Volume.from_name("sbv2-data-volume", create_if_missing=True)
 model_volume = modal.Volume.from_name("style-bert-vits2-models", create_if_missing=True)
 
+# 複数のGPU設定用関数を定義
+
 @app.function(
-    gpu="A10G",  # A10G GPU x1を使用
+    gpu="A10G",  # 24GB GPU
     volumes={
         "/data": data_volume,
         "/models": model_volume,
     },
-    timeout=86400,  # 24時間のタイムアウト
-    memory=32768,   # 32GB RAM
-    cpu=8,          # 8 CPUs
+    timeout=86400,
+    memory=32768,
+    cpu=8,
 )
 def train_model(
     config_path: str,
@@ -72,7 +74,8 @@ def train_model(
     batch_size: int = 2,
     learning_rate: float = 0.0001,
     use_jp_extra: bool = True,
-    resume_training: bool = False
+    resume_training: bool = False,
+    gpu_config: str = "A10G"  # GPU設定を外部から指定可能
 ):
     """
     Modal上でStyle-Bert-VITS2モデルを学習する関数
@@ -223,6 +226,145 @@ def train_model(
             "message": f"Training failed: {e}",
             "error_output": e.stderr
         }
+
+
+@app.function(
+    gpu="A100-80GB",  # 80GB GPU - 大規模モデル用
+    volumes={
+        "/data": data_volume,
+        "/models": model_volume,
+    },
+    timeout=86400,
+    memory=65536,  # 64GB RAM
+    cpu=16,
+)
+def train_model_a100_80gb(
+    config_path: str,
+    dataset_name: str,
+    epochs: int = 1000,
+    batch_size: int = 4,  # より大きなバッチサイズ
+    learning_rate: float = 0.0001,
+    use_jp_extra: bool = True,
+    resume_training: bool = False
+):
+    """
+    A100-80GB GPU用の学習関数（大規模データセット・高速学習用）
+    """
+    return train_model.local(
+        config_path, dataset_name, epochs, batch_size, 
+        learning_rate, use_jp_extra, resume_training
+    )
+
+
+@app.function(
+    gpu="A100-80GB:2",  # 2x A100-80GB - 並列学習用
+    volumes={
+        "/data": data_volume,
+        "/models": model_volume,
+    },
+    timeout=86400,
+    memory=131072,  # 128GB RAM
+    cpu=32,
+)
+def train_model_multi_a100(
+    config_path: str,
+    dataset_name: str,
+    epochs: int = 1000,
+    batch_size: int = 8,  # マルチGPU用バッチサイズ
+    learning_rate: float = 0.0001,
+    use_jp_extra: bool = True,
+    resume_training: bool = False
+):
+    """
+    マルチA100-80GB GPU用の学習関数（超高速学習用）
+    
+    注意: この機能を使用するには、train_ms_jp_extra.pyで分散学習を有効化する必要があります。
+    現在は単一GPU設定でrank=0, local_rank=0に固定されています。
+    """
+    import torch
+    
+    print(f"🚀 Multi-GPU Training Setup:")
+    print(f"   CUDA available: {torch.cuda.is_available()}")
+    print(f"   GPU count: {torch.cuda.device_count()}")
+    
+    # マルチGPU環境変数の設定
+    gpu_count = torch.cuda.device_count()
+    os.environ["MASTER_ADDR"] = "localhost"
+    os.environ["MASTER_PORT"] = "29500"
+    os.environ["WORLD_SIZE"] = str(gpu_count)
+    os.environ["RANK"] = "0"  # 単一ノード内でのメインプロセス
+    os.environ["LOCAL_RANK"] = "0"
+    
+    if gpu_count > 1:
+        print("🚀 Multi-GPU training ENABLED! Distributed training will be activated.")
+    else:
+        print("💻 Single-GPU training mode.")
+    
+    for i in range(gpu_count):
+        props = torch.cuda.get_device_properties(i)
+        print(f"   GPU {i}: {props.name}, Memory: {props.total_memory // (1024**3)} GB")
+    
+    print(f"🔧 Environment Variables:")
+    print(f"   MASTER_ADDR: {os.environ['MASTER_ADDR']}")
+    print(f"   MASTER_PORT: {os.environ['MASTER_PORT']}")
+    print(f"   WORLD_SIZE: {os.environ['WORLD_SIZE']}")
+    print(f"   RANK: {os.environ['RANK']}")
+    print(f"   LOCAL_RANK: {os.environ['LOCAL_RANK']}")
+    
+    return train_model.local(
+        config_path, dataset_name, epochs, batch_size, 
+        learning_rate, use_jp_extra, resume_training
+    )
+
+
+@app.function(
+    gpu="H100:2",  # 2x H100 - 最高性能
+    volumes={
+        "/data": data_volume,
+        "/models": model_volume,
+    },
+    timeout=86400,
+    memory=131072,  # 128GB RAM
+    cpu=32,
+)
+def train_model_h100(
+    config_path: str,
+    dataset_name: str,
+    epochs: int = 1000,
+    batch_size: int = 16,  # H100用大バッチサイズ
+    learning_rate: float = 0.0001,
+    use_jp_extra: bool = True,
+    resume_training: bool = False
+):
+    """
+    H100 GPU用の学習関数（最高性能・最速学習用）
+    """
+    import torch
+    
+    print(f"🔥 H100 Training Setup:")
+    print(f"   CUDA available: {torch.cuda.is_available()}")
+    print(f"   GPU count: {torch.cuda.device_count()}")
+    
+    # マルチGPU環境変数の設定
+    gpu_count = torch.cuda.device_count()
+    os.environ["MASTER_ADDR"] = "localhost"
+    os.environ["MASTER_PORT"] = "29500"
+    os.environ["WORLD_SIZE"] = str(gpu_count)
+    os.environ["RANK"] = "0"
+    os.environ["LOCAL_RANK"] = "0"
+    
+    for i in range(gpu_count):
+        props = torch.cuda.get_device_properties(i)
+        print(f"   GPU {i}: {props.name}, Memory: {props.total_memory // (1024**3)} GB")
+    
+    print(f"🔧 H100 Environment Variables:")
+    print(f"   MASTER_ADDR: {os.environ['MASTER_ADDR']}")
+    print(f"   WORLD_SIZE: {os.environ['WORLD_SIZE']} GPUs")
+    
+    return train_model.local(
+        config_path, dataset_name, epochs, batch_size, 
+        learning_rate, use_jp_extra, resume_training
+    )
 
 
 @app.function(
@@ -623,6 +765,7 @@ def main(
     trim: bool = True, # 前処理用引数
     num_processes: int = 4, # 前処理用引数
     path_to_list: str = "", # list_volume_path用引数
+    gpu_type: str = "A10G", # GPU設定選択用引数
 ):
     """
     Modal学習システムのメインエントリーポイント
@@ -637,8 +780,17 @@ def main(
     # データセットの前処理
     modal run modal_training.py --action=preprocess --dataset-name=my_voice
     
-    # 学習開始
+    # 学習開始（A10G GPU）
     modal run modal_training.py --action=train --dataset-name=my_voice --epochs=500
+    
+    # A100-80GB GPU使用
+    modal run modal_training.py --action=train --dataset-name=my_voice --gpu-type=A100-80GB
+    
+    # マルチA100-80GB GPU使用（高速学習）
+    modal run modal_training.py --action=train --dataset-name=my_voice --gpu-type=A100-80GB:2
+    
+    # H100 GPU使用（最高性能）
+    modal run modal_training.py --action=train --dataset-name=my_voice --gpu-type=H100:2
     
     # モデルダウンロード
     modal run modal_training.py --action=download --dataset-name=my_voice
@@ -654,16 +806,54 @@ def main(
     """
     
     if action == "train":
-        print(f"🚀 Starting training for dataset: {dataset_name}")
-        result = train_model.remote(
-            config_path=config_path,
-            dataset_name=dataset_name,
-            epochs=10, # テスト用にエポック数を10に設定
-            batch_size=batch_size,
-            learning_rate=learning_rate,
-            use_jp_extra=use_jp_extra,
-            resume_training=resume
-        )
+        print(f"🚀 Starting training for dataset: {dataset_name} with GPU: {gpu_type}")
+        
+        # GPU設定に応じて適切な関数を選択
+        if gpu_type == "A100-80GB":
+            print("📊 Using A100-80GB GPU for enhanced performance")
+            result = train_model_a100_80gb.remote(
+                config_path=config_path,
+                dataset_name=dataset_name,
+                epochs=epochs,
+                batch_size=batch_size if batch_size != 2 else 4,  # A100用バッチサイズ調整
+                learning_rate=learning_rate,
+                use_jp_extra=use_jp_extra,
+                resume_training=resume
+            )
+        elif gpu_type == "A100-80GB:2":
+            print("🚀 Using Multi-A100-80GB GPUs for maximum performance")
+            result = train_model_multi_a100.remote(
+                config_path=config_path,
+                dataset_name=dataset_name,
+                epochs=epochs,
+                batch_size=batch_size if batch_size != 2 else 8,  # マルチGPU用バッチサイズ調整
+                learning_rate=learning_rate,
+                use_jp_extra=use_jp_extra,
+                resume_training=resume
+            )
+        elif gpu_type.startswith("H100"):
+            print("🔥 Using H100 GPUs for ultimate performance")
+            result = train_model_h100.remote(
+                config_path=config_path,
+                dataset_name=dataset_name,
+                epochs=epochs,
+                batch_size=batch_size if batch_size != 2 else 16,  # H100用バッチサイズ調整
+                learning_rate=learning_rate,
+                use_jp_extra=use_jp_extra,
+                resume_training=resume
+            )
+        else:
+            # デフォルト（A10G）
+            print("💻 Using A10G GPU (default)")
+            result = train_model.remote(
+                config_path=config_path,
+                dataset_name=dataset_name,
+                epochs=epochs,
+                batch_size=batch_size,
+                learning_rate=learning_rate,
+                use_jp_extra=use_jp_extra,
+                resume_training=resume
+            )
         print(f"Training result: {result}")
         
     elif action == "preprocess":

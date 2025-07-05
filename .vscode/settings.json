@@ -9,7 +9,7 @@
         "editor.formatOnSave": true,
     },
     // Pylance の Type Checking を有効化
-    "python.languageServer": "Pylance",
+    "python.languageServer": "None",
     "python.analysis.typeCheckingMode": "strict",
     // Pylance の Type Checking のうち、いくつかのエラー報告を抑制する
     "python.analysis.diagnosticSeverityOverrides": {
@@ -28,4 +28,21 @@
         "reportUnusedFunction": "none",
         "reportUnusedVariable": "information",
     },
+    "cursorpyright.analysis.diagnosticSeverityOverrides": {
+        "reportConstantRedefinition": "none",
+        "reportGeneralTypeIssues": "warning",
+        "reportMissingParameterType": "warning",
+        "reportMissingTypeStubs": "none",
+        "reportPrivateImportUsage": "none",
+        "reportPrivateUsage": "warning",
+        "reportShadowedImports": "none",
+        "reportUnnecessaryComparison": "none",
+        "reportUnknownArgumentType": "none",
+        "reportUnknownMemberType": "none",
+        "reportUnknownParameterType": "warning",
+        "reportUnknownVariableType": "none",
+        "reportUnusedFunction": "none",
+        "reportUnusedVariable": "information"
+    },
+    "cursorpyright.analysis.typeCheckingMode": "strict",
 }

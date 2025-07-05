@@ -157,17 +157,27 @@ def run():
         )
     )
 
-    # backend = "nccl"
-    # if platform.system() == "Windows":
-    #     backend = "gloo"  # If Windows,switch to gloo backend.
-    # dist.init_process_group(
-    #     backend=backend,
-    #     init_method="env://",
-    #     timeout=datetime.timedelta(seconds=300),
-    # )  # Use torchrun instead of mp.spawn
-    rank = 0  # 単一GPU用に固定
-    local_rank = 0  # 単一GPU用に固定
-    n_gpus = 1  # 単一GPU用に固定
+    # 分散学習の設定を復活
+    if int(os.environ.get("WORLD_SIZE", 1)) > 1:
+        # マルチGPU環境
+        backend = "nccl"
+        if platform.system() == "Windows":
+            backend = "gloo"  # If Windows,switch to gloo backend.
+        dist.init_process_group(
+            backend=backend,
+            init_method="env://",
+            timeout=datetime.timedelta(seconds=300),
+        )  # Use torchrun instead of mp.spawn
+        rank = int(os.environ["RANK"])
+        local_rank = int(os.environ["LOCAL_RANK"])
+        n_gpus = int(os.environ["WORLD_SIZE"])
+        logger.info(f"🚀 Multi-GPU training: rank={rank}, local_rank={local_rank}, n_gpus={n_gpus}")
+    else:
+        # シングルGPU環境（従来通り）
+        rank = 0
+        local_rank = 0
+        n_gpus = 1
+        logger.info(f"💻 Single-GPU training: rank={rank}, local_rank={local_rank}, n_gpus={n_gpus}")
 
     hps = HyperParameters.load_from_json(args.config)
     # This is needed because we have to pass values to `train_and_evaluate()
