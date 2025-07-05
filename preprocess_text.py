@@ -92,6 +92,9 @@ def preprocess(
     if error_log_path.exists():
         error_log_path.unlink()
     error_count = 0
+    
+    # wavsディレクトリのパス
+    wavs_path = transcription_path.parent / "wavs"
 
     total_lines = count_lines(transcription_path)
 
