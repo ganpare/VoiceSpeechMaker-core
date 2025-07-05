@@ -141,6 +141,16 @@ def train_model(
     config["train"]["learning_rate"] = learning_rate
     config["train"]["bf16_run"] = True  # Mixed precision有効化
     
+    # n_speakersが0の場合は強制的に修正
+    if config["data"]["n_speakers"] == 0:
+        print("⚠️ Fixing n_speakers from 0 to 1")
+        config["data"]["n_speakers"] = 1
+        if not config["data"]["spk2id"]:
+            config["data"]["spk2id"] = {dataset_name: 0}
+            print(f"⚠️ Setting spk2id to {config['data']['spk2id']}")
+    
+    print(f"🔍 Final config check: n_speakers={config['data']['n_speakers']}, spk2id={config['data']['spk2id']}")
+    
     with open(character_config_path, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
     print(f"⚙️ Updated training configuration in {character_config_path}")
