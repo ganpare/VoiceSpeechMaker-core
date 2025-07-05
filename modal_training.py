@@ -119,23 +119,27 @@ def train_model(
     
     # キャラクター固有の設定ファイルを読み込み、更新
     character_config_path = local_destination_path / "config.json"
-    if not character_config_path.exists():
-        # もし存在しない場合は、デフォルトのconfig_jp_extra.jsonをコピーして使用
+    
+    if character_config_path.exists():
+        # 既存のconfig.jsonが存在する場合（前処理済み）は、学習パラメータのみ更新
+        print(f"📄 Using existing config.json with preprocessed speaker information")
+        with open(character_config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+    else:
+        # 前処理されていない場合のみデフォルトをコピー
         shutil.copy(config_path, character_config_path)
         print(f"📝 Copied {config_path} to {character_config_path}")
-
-    with open(character_config_path, 'r', encoding='utf-8') as f:
-        config = json.load(f)
+        with open(character_config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        # training_files と validation_files のパスを設定
+        config["data"]["training_files"] = f"Data/{dataset_name}/train.list"
+        config["data"]["validation_files"] = f"Data/{dataset_name}/val.list"
     
-    # GPUと学習設定を更新
+    # GPUと学習設定を更新（既存の話者情報は保持）
     config["train"]["epochs"] = epochs
     config["train"]["batch_size"] = batch_size
     config["train"]["learning_rate"] = learning_rate
     config["train"]["bf16_run"] = True  # Mixed precision有効化
-
-    # training_files と validation_files のパスを更新
-    config["data"]["training_files"] = f"Data/{dataset_name}/train.list"
-    config["data"]["validation_files"] = f"Data/{dataset_name}/val.list"
     
     with open(character_config_path, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
@@ -502,6 +506,94 @@ def list_volume_path(path_to_list: str):
     return {"status": "success", "path": path_to_list, "contents": contents}
 
 
+@app.function(
+    volumes={"/data": data_volume},
+    timeout=600,
+)
+def read_text_error_log(dataset_name: str):
+    """
+    指定されたデータセットのtext_error.logファイルを読み込む関数
+    """
+    from pathlib import Path
+    
+    config_path = Path(f"/data/Data/{dataset_name}/text_error.log")
+    
+    if not config_path.exists():
+        return {"status": "error", "message": f"text_error.log not found for dataset {dataset_name}"}
+    
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        return {
+            "status": "success",
+            "log_path": str(config_path),
+            "content": content,
+            "line_count": len(content.splitlines()) if content else 0
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to read text_error.log: {str(e)}"}
+
+@app.function(
+    volumes={"/data": data_volume},
+    timeout=600,
+)
+def read_config_file(dataset_name: str):
+    """
+    指定されたデータセットのconfig.jsonファイルを読み込んで内容を表示
+    
+    Args:
+        dataset_name: データセット名
+    """
+    from pathlib import Path
+    import json
+    
+    config_path = Path("/data/Data") / dataset_name / "config.json"
+    
+    if not config_path.exists():
+        return {
+            "status": "error", 
+            "message": f"config.json not found at {config_path}",
+            "dataset": dataset_name
+        }
+    
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config_content = json.load(f)
+        
+        # 話者情報を抽出
+        speaker_info = {}
+        if "data" in config_content:
+            data_config = config_content["data"]
+            speaker_info["n_speakers"] = data_config.get("n_speakers", "NOT_SET")
+            speaker_info["spk2id"] = data_config.get("spk2id", "NOT_SET")
+            speaker_info["training_files"] = data_config.get("training_files", "NOT_SET")
+            speaker_info["validation_files"] = data_config.get("validation_files", "NOT_SET")
+        
+        return {
+            "status": "success",
+            "dataset": dataset_name,
+            "config_path": str(config_path),
+            "speaker_info": speaker_info,
+            "full_config": config_content
+        }
+        
+    except json.JSONDecodeError as e:
+        return {
+            "status": "error",
+            "message": f"Invalid JSON in config.json: {str(e)}",
+            "dataset": dataset_name,
+            "config_path": str(config_path)
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error reading config.json: {str(e)}",
+            "dataset": dataset_name,
+            "config_path": str(config_path)
+        }
+
+
 # コマンドライン実行用
 @app.local_entrypoint()
 def main(
@@ -543,6 +635,9 @@ def main(
 
     # ボリューム内のパスをリスト
     modal run modal_training.py --action=list-path --path-to-list=/data/Data
+    
+    # データセットのconfig.jsonを読み込み
+    modal run modal_training.py --action=read-config --dataset-name=大蔵衣遠
     """
     
     if action == "train":
@@ -600,6 +695,33 @@ def main(
         result = list_volume_path.remote(path_to_list=path_to_list)
         print(f"List result: {result}")
         
+    elif action == "read-config":
+        print(f"📄 Reading config.json for dataset: {dataset_name}")
+        result = read_config_file.remote(dataset_name=dataset_name)
+        
+        if result["status"] == "success":
+            print(f"✅ Config file found at: {result['config_path']}")
+            print(f"📋 Speaker Information:")
+            for key, value in result["speaker_info"].items():
+                print(f"  {key}: {value}")
+            
+            print(f"\n📄 Full Config Content:")
+            print(json.dumps(result["full_config"], indent=2, ensure_ascii=False))
+        else:
+            print(f"❌ Error reading config: {result['message']}")
+            
+    elif action == "read-error-log":
+        print(f"📋 Reading text_error.log for dataset: {dataset_name}")
+        result = read_text_error_log.remote(dataset_name=dataset_name)
+        
+        if result["status"] == "success":
+            print(f"✅ Error log found at: {result['log_path']}")
+            print(f"📋 Log contains {result['line_count']} lines")
+            print(f"\n📄 Error Log Content:")
+            print(result["content"])
+        else:
+            print(f"❌ Error reading log: {result['message']}")
+        
     elif action == "upload-local":
         print(f"📤 Uploading local dataset: {dataset_name}")
         
@@ -637,7 +759,7 @@ def main(
         
     else:
         print(f"❌ Unknown action: {action}")
-        print("Available actions: train, upload-local, upload, download, list, preprocess, list-path")
+        print("Available actions: train, upload-local, upload, download, list, preprocess, list-path, read-config, read-error-log")
 
 
 if __name__ == "__main__":

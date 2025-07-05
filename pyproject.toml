@@ -7,7 +7,7 @@ name = "style-bert-vits2"
 dynamic = ["version"]
 description = "Style-Bert-VITS2: Bert-VITS2 with more controllable voice styles."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "AGPL-3.0"
 keywords = []
 authors = [
@@ -16,7 +16,6 @@ authors = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -26,18 +25,24 @@ dependencies = [
     "cn2an",
     "e2k",
     "g2p_en",
+    "gradio>=5.35.0",
     "jaconv",
     "jieba",
+    "librosa>=0.11.0",
     "loguru",
     "nltk<=3.8.1",
     "num2words",
     "numba",
     "numpy<2",
+    "onnxruntime>=1.22.0",
     "pydantic>=2.0",
+    "pyloudnorm>=0.1.1",
     "pyopenjtalk-mod",
     "pypinyin",
     "pyworld-prebuilt",
     "safetensors",
+    "sentencepiece>=0.2.0",
+    "torch>=2.7.1",
     "transformers",
 ]
 
