@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from numpy.typing import NDArray
-from pyopenjtalk import OpenJTalk
 
 from style_bert_vits2.constants import Languages
 from style_bert_vits2.nlp.symbols import (
@@ -31,7 +30,7 @@ def extract_bert_feature(
     assist_text: str | None = None,
     assist_text_weight: float = 0.7,
     sep_text: list[str] | None = None,
-) -> torch.Tensor:
+) -> "torch.Tensor":
     """
     テキストから BERT の特徴量を抽出する (PyTorch 推論)
 
@@ -47,6 +46,9 @@ def extract_bert_feature(
     Returns:
         torch.Tensor: BERT の特徴量
     """
+
+    # 必要なときだけimport
+    from pyopenjtalk import OpenJTalk
 
     if language == Languages.JP:
         from style_bert_vits2.nlp.japanese.bert_feature import extract_bert_feature

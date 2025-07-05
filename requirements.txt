@@ -32,7 +32,6 @@ pypinyin
 pyworld-prebuilt
 stable_ts
 tensorboard
-torch
-torchaudio
 transformers==4.48
 umap-learn
+huggingface_hub

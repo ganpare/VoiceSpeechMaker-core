@@ -7,7 +7,7 @@ dist/
 .ruff_cache/
 .DS_Store
 ._*
-
+modal_env/
 /*.yml
 !/default_config.yml
 /bert/*/*.bin
@@ -46,3 +46,15 @@ safetensors.ipynb
 .DS_Store
 playground.ipynb
 playgrounds/
+
+# Modal仮想環境関連
+modal_env/__pycache__/
+modal_env/*.pyc
+modal_env/Lib/
+modal_env/Include/
+modal_env/Scripts/
+modal_env/share/
+modal_env/Lib/site-packages/
+modal_env/*.pyd
+modal_env/*.whl
+modal_env/*.dist-info/

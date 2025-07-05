@@ -58,6 +58,7 @@ def initialize(
     freeze_decoder: bool,
     use_jp_extra: bool,
     log_interval: int,
+    pretrained_dir_path: str, # 追加
 ):
     global logger_handler
     paths = get_path(model_name)

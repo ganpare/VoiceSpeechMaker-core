@@ -36,6 +36,37 @@ from style_bert_vits2.models.models_jp_extra import (
 from style_bert_vits2.nlp.symbols import SYMBOLS
 from style_bert_vits2.utils.stdout_wrapper import SAFE_STDOUT
 
+# Modal用サンプル: Hugging Face Secretを利用する場合
+import modal
+
+# Modalイメージ定義（Python 3.10, apt依存, requirements.txt一元管理）
+image = (
+    modal.Image.debian_slim(python_version="3.10")
+    .apt_install(["git", "wget", "unzip", "ffmpeg", "libsndfile1", "sox"])
+    .pip_install("torch==2.1.2", "torchaudio==2.1.2")
+    .pip_install_from_requirements("requirements.txt")
+)
+
+app = modal.App("sbv2-train", image=image)
+
+data_volume = modal.Volume.from_name("sbv2-data-volume")
+assets_volume = modal.Volume.from_name("sbv2-assets-volume")
+
+@app.function(
+    volumes={
+        "/mnt/gamedata": data_volume,
+        "/model_assets": assets_volume
+    },
+    secrets=[modal.Secret.from_name("huggingface-token")],
+    gpu="A10G"  # 必要に応じてGPUタイプを指定
+)
+def modal_train():
+    import subprocess
+    subprocess.run([
+        "python", "train_ms_jp_extra.py",
+        "--config", "/mnt/gamedata/Data/エスト・ギャラッハ・アーノッツ/config.json",
+        "--model", "/mnt/gamedata/Data/エスト・ギャラッハ・アーノッツ"
+    ], check=True)
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = (

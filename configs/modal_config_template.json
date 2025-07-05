@@ -1,0 +1,46 @@
+{
+  "gpu": {
+    "type": "A100",
+    "count": 1,
+    "memory_gb": 40
+  },
+  "compute": {
+    "cpu_count": 8,
+    "memory_gb": 32,
+    "timeout_hours": 24
+  },
+  "training": {
+    "epochs": 1000,
+    "batch_size": 2,
+    "learning_rate": 0.0001,
+    "mixed_precision": true,
+    "gradient_checkpointing": false,
+    "save_interval": 1000,
+    "eval_interval": 1000
+  },
+  "data": {
+    "preprocessing": {
+      "resample_rate": 44100,
+      "trim_silence": true,
+      "normalize_audio": true
+    },
+    "augmentation": {
+      "enable": false,
+      "pitch_shift": false,
+      "time_stretch": false,
+      "noise_injection": false
+    }
+  },
+  "model": {
+    "use_jp_extra": true,
+    "use_wavlm_discriminator": true,
+    "use_duration_discriminator": true,
+    "freeze_bert": false
+  },
+  "optimization": {
+    "gradient_accumulation_steps": 1,
+    "max_grad_norm": 5.0,
+    "warmup_steps": 1000,
+    "lr_scheduler": "exponential"
+  }
+}

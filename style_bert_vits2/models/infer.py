@@ -3,7 +3,6 @@ from typing import Any, cast
 import numpy as np
 import torch
 from numpy.typing import NDArray
-from pyopenjtalk import OpenJTalk
 from torch.overrides import TorchFunctionMode
 from torch.utils import _device
 
