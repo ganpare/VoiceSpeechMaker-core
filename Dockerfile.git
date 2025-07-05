@@ -1,0 +1,60 @@
+# Modern BERT Voice Speech Maker Training with Git Clone
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
+
+# 必要なシステムパッケージをインストール
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    curl \
+    build-essential \
+    ffmpeg \
+    libsndfile1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 作業ディレクトリを設定
+WORKDIR /workspace
+
+# GitHubから現在のリポジトリをクローン（引数で設定可能）
+ARG GIT_REPO_URL=https://github.com/ganpare/VoiceSpeechMaker-core.git
+ARG GIT_BRANCH=master
+ARG GIT_COMMIT_HASH=""
+
+# Gitリポジトリをクローン
+RUN echo "Cloning repository: ${GIT_REPO_URL}" && \
+    git clone --depth 1 --branch ${GIT_BRANCH} ${GIT_REPO_URL} /tmp/repo && \
+    cp -r /tmp/repo/* /workspace/ && \
+    rm -rf /tmp/repo
+
+# 特定のコミットハッシュが指定されている場合はチェックアウト
+RUN if [ -n "${GIT_COMMIT_HASH}" ]; then \
+        echo "Checking out commit: ${GIT_COMMIT_HASH}" && \
+        git init && \
+        git remote add origin ${GIT_REPO_URL} && \
+        git fetch origin ${GIT_COMMIT_HASH} && \
+        git checkout ${GIT_COMMIT_HASH}; \
+    fi
+
+# 必要なPythonパッケージをインストール
+RUN pip install --no-cache-dir -r requirements.txt
+
+# CUDA環境の設定
+ENV CUDA_VISIBLE_DEVICES=0
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# 学習に必要な環境変数
+ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+ENV PYTHONPATH=/workspace:$PYTHONPATH
+
+# データとモデル用のディレクトリを作成（Volume用）
+RUN mkdir -p /workspace/Data /workspace/model_assets /workspace/logs
+
+# 学習スクリプトを実行可能にする
+RUN chmod +x train_ms_jp_extra.py
+
+# エントリーポイントスクリプト（リポジトリ内のものを使用）
+RUN chmod +x docker-entrypoint.sh
+
+# デフォルトコマンド
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["python", "train_ms_jp_extra.py"]

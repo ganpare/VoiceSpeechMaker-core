@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  voice-speech-maker-train:
+    build:
+      context: .
+      dockerfile: Dockerfile.git
+      args:
+        # Gitリポジトリの設定（Modern BERT Voice Speech Maker）
+        GIT_REPO_URL: https://github.com/ganpare/VoiceSpeechMaker-core.git
+        GIT_BRANCH: master
+        # 特定のコミットを使いたい場合はコメントアウトを外す
+        # GIT_COMMIT_HASH: "abcdef123456"
+    
+    container_name: voice-speech-maker-training
+    
+    # GPU設定
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    
+    # ボリュームマウント（Modal練習用 - 永続化重要）
+    volumes:
+      # データセット用ボリューム（学習データ）
+      - training_data:/workspace/Data
+      # モデル出力用ボリューム（学習済みモデル・チェックポイント）
+      - model_outputs:/workspace/model_assets
+      # ログ用ボリューム（学習ログ）
+      - training_logs:/workspace/logs
+      # 設定ファイル用（ローカルから読み込み）
+      - ./configs:/workspace/configs:ro
+    
+    # 環境変数
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - PYTHONPATH=/workspace
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+    
+    # バッチ学習用コマンド（Modal練習用）
+    command: |
+      bash -c "
+        echo 'Starting batch training...'
+        python train_ms_jp_extra.py \
+          --config configs/config.json \
+          --model Data/your_model_name \
+          --no_progress_bar \
+          --speedup
+      "
+    
+    # ヘルスチェック
+    healthcheck:
+      test: ["CMD", "python", "-c", "import torch; print('OK' if torch.cuda.is_available() else 'FAIL')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# 名前付きボリューム（Modal練習用 - 永続化）
+volumes:
+  training_data:
+    driver: local
+    name: voice_speech_maker_data
+  model_outputs:
+    driver: local  
+    name: voice_speech_maker_models
+  training_logs:
+    driver: local
+    name: voice_speech_maker_logs
