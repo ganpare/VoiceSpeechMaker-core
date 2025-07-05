@@ -291,6 +291,7 @@ def preprocess_all(
         freeze_decoder=freeze_decoder,
         use_jp_extra=use_jp_extra,
         log_interval=log_interval,
+        pretrained_dir_path="pretrained_jp_extra" if use_jp_extra else "pretrained",
     )
     if not success:
         return False, message

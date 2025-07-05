@@ -88,6 +88,11 @@ def train_model(
     # 作業ディレクトリを設定（イメージに含まれたソースコードを使用）
     os.chdir("/app")
     
+    # ディレクトリ構造を修正：/data/Data を /Data にシンボリックリンク
+    if not os.path.exists("/Data") and os.path.exists("/data/Data"):
+        os.symlink("/data/Data", "/Data")
+        print("✅ Created symlink: /data/Data -> /Data")
+    
     # 必要に応じて追加パッケージをインストール
     subprocess.run([sys.executable, "-m", "pip", "install", "-e", "."], check=True)
     # Debug: List contents of /app and /app/pretrained_jp_extra
@@ -213,6 +218,7 @@ def preprocess_dataset(
     normalize: bool = True,
     trim: bool = True,
     num_processes: int = 4,
+    use_jp_extra: bool = True,
 ):
     """
     Modal上でデータセットの前処理を行う関数
@@ -226,6 +232,11 @@ def preprocess_dataset(
     print(f"🚀 Starting preprocessing for dataset: {dataset_name}")
     
     os.chdir("/app")
+    
+    # ディレクトリ構造を修正：/data/Data を /Data にシンボリックリンク
+    if not os.path.exists("/Data") and os.path.exists("/data/Data"):
+        os.symlink("/data/Data", "/Data")
+        print("✅ Created symlink: /data/Data -> /Data")
     
     # 必要に応じて追加パッケージをインストール
     subprocess.run([sys.executable, "-m", "pip", "install", "-e", "."], check=True)
@@ -248,6 +259,21 @@ def preprocess_dataset(
             shutil.rmtree(local_destination_path)
         shutil.copytree(volume_source_path, local_destination_path)
         print(f"✅ Dataset copied successfully to {local_destination_path}")
+        
+        # ファイル構造を整理：wavファイルをrawディレクトリに移動
+        raw_dir = local_destination_path / "raw"
+        wav_files = list(local_destination_path.glob("*.wav"))
+        
+        if wav_files:
+            raw_dir.mkdir(exist_ok=True)
+            print(f"📁 Created raw directory: {raw_dir}")
+            
+            for wav_file in wav_files:
+                target_path = raw_dir / wav_file.name
+                shutil.move(str(wav_file), str(target_path))
+                
+            print(f"✅ Moved {len(wav_files)} wav files to raw directory")
+        
     except FileNotFoundError:
         raise FileNotFoundError(f"Dataset {dataset_name} not found in volume at {volume_source_path}. Please ensure the dataset exists at this path on the Modal volume.")
 
@@ -268,6 +294,8 @@ def preprocess_dataset(
         cmd.append("--normalize")
     if trim:
         cmd.append("--trim")
+    if use_jp_extra:
+        cmd.append("--use_jp_extra")
         
     print(f"🔥 Running preprocessing command: {' '.join(cmd)}")
     
