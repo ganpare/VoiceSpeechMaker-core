@@ -35,10 +35,13 @@ image = (
         "punctuators",
         "umap-learn",
         "setuptools<80.9",
+        "huggingface_hub",
     ])
     .apt_install(["git", "wget", "unzip", "ffmpeg"])
     .run_commands([
         "pip install --upgrade pip",
+        # WavLMモデルを事前ダウンロード
+        "python -c \"from huggingface_hub import snapshot_download; snapshot_download('microsoft/wavlm-base-plus', local_dir='/app/slm/wavlm-base-plus', local_dir_use_symlinks=False)\"",
     ])
     # 現在のプロジェクトディレクトリをコピー
     .add_local_dir("pretrained_jp_extra", "/app/pretrained_jp_extra") # この行を追加
