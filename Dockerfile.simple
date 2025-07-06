@@ -8,16 +8,12 @@ RUN apt-get update && apt-get install -y \
     git \
     ffmpeg \
     libsndfile1-dev \
+    build-essential \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 作業ディレクトリを設定
 WORKDIR /workspace
-
-# ソースコードをコピー
-COPY . /workspace/
-
-# 依存関係をインストール
-RUN pip install --no-cache-dir -r requirements.txt
 
 # CUDA環境の設定
 ENV CUDA_VISIBLE_DEVICES=0
@@ -27,4 +23,4 @@ ENV PYTHONPATH=/workspace
 RUN mkdir -p /workspace/Data /workspace/model_assets /workspace/logs
 
 # デフォルトコマンド
-CMD ["python", "train_ms_jp_extra.py"]
+CMD ["bash"]
