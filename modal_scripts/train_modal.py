@@ -111,7 +111,7 @@ def train_luna0712():
         "protobuf==4.25.0",
         "tensorboard>=2.10.0",
         "onnxruntime-gpu>=1.16.0",
-        "pydantic>=2.0"
+        "pydantic==1.10.12"
     ], check=True)
     
     # WavLM-base-plusモデルをHugging Faceからダウンロード
